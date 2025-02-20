@@ -3,7 +3,6 @@
 ## Overview
 
 This Rust solution uses the [Polars](https://github.com/pola-rs/polars) library to:
-- Generate a sample CSV dataset
 - Perform aggregations:
   - Account × Monthly Aggregation
   - Department × Monthly Aggregation
@@ -16,6 +15,7 @@ This Rust solution uses the [Polars](https://github.com/pola-rs/polars) library 
 ### Prerequisites
 - Rust (LTS version)
 - Cargo (comes with Rust)
+- Sample data (generate using the top-level `generator` package)
 
 ### Installation
 1. Navigate to the `rust` directory
@@ -33,8 +33,6 @@ cargo run
 
 #### Configuration
 The behavior can be configured by modifying `main.rs`:
-
-- Data Generation: Uncomment the data generation function call to generate new sample data
 - File Paths: Modify the CSV file paths in the configuration section
 - Aggregation Options: Enable/disable specific aggregation types
 
@@ -42,7 +40,6 @@ The behavior can be configured by modifying `main.rs`:
 ```
 src/
 ├── main.rs           # Entry point and configuration
-├── data_generator.rs # Sample data generation
 ├── process.rs        # Data processing and aggregation
 └── benchmark.rs      # Benchmarking utilities
 ```
@@ -52,4 +49,4 @@ Results will be saved in the `../results/` directory with the following files:
 - `rust_account_month.csv`
 - `rust_department_month.csv`
 - `rust_account_dept_month.csv`
-- `rust_pivot_aggregation.csv`
+- `rust_pivot_aggregation.csv` (if pivot option is enabled)

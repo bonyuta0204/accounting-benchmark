@@ -12,18 +12,20 @@ Results are exported as CSV files (including a pivot table format).
 
 ```
 accounting-benchmark/
-├── go/
+├── generator/           # Data generation package (Rust)
+│   ├── Cargo.toml
+│   └── src/
+│       └── main.rs
+├── go/                 # Go implementation
 │   ├── go.mod
 │   ├── main.go
-│   ├── data_generator.go
 │   ├── process.go
 │   ├── benchmark.go
 │   └── README.md
-├── rust/
+├── rust/               # Rust implementation
 │   ├── Cargo.toml
 │   ├── src/
 │   │   ├── main.rs
-│   │   ├── data_generator.rs
 │   │   ├── process.rs
 │   │   └── benchmark.rs
 │   └── README.md
@@ -47,7 +49,12 @@ accounting-benchmark/
 ## Implementation Flow
 
 1. **Data Preparation**
-   - Generate CSV data using the data generator in either Go or Rust.
+   - Generate CSV data using the dedicated generator package:
+     ```bash
+     # Generate 1 million rows of data
+     cd generator
+     cargo run -- -o ../data/sample_1m.csv -r 1000000
+     ```
 
 2. **Aggregation Processing**
    - Each implementation reads the CSV
@@ -60,6 +67,28 @@ accounting-benchmark/
 
 4. **Output**
    - Aggregated results and benchmark data are saved as CSV files in the `results/` directory.
+
+## Data Generation
+
+The project includes a dedicated Rust-based data generator with the following features:
+- Configurable number of rows
+- Customizable date range
+- Consistent data format for benchmarking
+- CLI interface with the following options:
+  - `-o, --output`: Output file path
+  - `-r, --rows`: Number of rows to generate (default: 1000)
+  - `-s, --start-date`: Start date (default: 2020-01-01)
+  - `-e, --end-date`: End date (default: 2020-12-31)
+
+Example usage:
+```bash
+cd generator
+# Generate 1 million rows for year 2020
+cargo run -- -o ../data/sample_1m.csv -r 1000000
+
+# Generate 10 million rows for year 2023
+cargo run -- -o ../data/sample_10m.csv -r 10000000 -s 2023-01-01 -e 2023-12-31
+```
 
 ## Benchmark Results
 
@@ -96,15 +125,15 @@ compared to both the Go implementation and unoptimized Rust version.
 
 ## Execution Instructions
 
-### Rust
+### Data Generation
+1. Navigate to the `generator` directory
+2. Run `cargo build` to build the generator
+3. Generate data using the CLI options described above
+
+### Rust Implementation
 1. Navigate to the `rust` directory
 2. Build with `cargo build` and run with `cargo run`
 
-### Go
+### Go Implementation
 1. Navigate to the `go` directory
-2. Run `go mod tidy` to fetch dependencies
-3. Use:
-   ```bash
-   go run . -mode=<generate|process|benchmark>
-   ```
-   to generate data, process aggregations, or run benchmarks.
+2. Build with `go build` and run with `go run main.go`
