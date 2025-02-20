@@ -1,2 +1,5 @@
 !data/.keep
+!results/.keep
+
 data/
+results/
