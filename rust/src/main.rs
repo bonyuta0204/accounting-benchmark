@@ -1,10 +1,15 @@
 mod benchmark;
 mod process;
+use clap::Parser;
+
+#[derive(Parser)]
+#[command(author, version, about, long_about = None)]
+struct Args {
+    /// Path to the CSV file
+    csv_path: String,
+}
 
 fn main() {
-    // Path to the CSV data (adjust if necessary)
-    let csv_path = "../data/sample_1m.csv";
-
-    // Run the aggregation benchmarks
-    benchmark::run_benchmarks(csv_path);
+    let args = Args::parse();
+    benchmark::run_benchmarks(&args.csv_path);
 }
