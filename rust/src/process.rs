@@ -10,7 +10,19 @@ pub fn aggregate_by_account_month(csv_path: &str) -> Result<DataFrame, Box<dyn E
     // Create a new column "Month" extracted from the "Date" column
     df = df
         .lazy()
-        .with_column(col("Date").dt().month().alias("Month"))
+        .with_column(
+            col("Date")
+                .str()
+                .to_date(StrptimeOptions {
+                    format: Some("%Y-%m-%d".to_string().into()),
+                    strict: false,
+                    exact: false,
+                    cache: false,
+                })
+                .dt()
+                .month()
+                .alias("Month"),
+        )
         .collect()?;
 
     // Group by Account and Month; sum the Amount
@@ -29,7 +41,19 @@ pub fn aggregate_by_department_month(csv_path: &str) -> Result<DataFrame, Box<dy
 
     df = df
         .lazy()
-        .with_column(col("Date").dt().month().alias("Month"))
+        .with_column(
+            col("Date")
+                .str()
+                .to_date(StrptimeOptions {
+                    format: Some("%Y-%m-%d".to_string().into()),
+                    strict: false,
+                    exact: false,
+                    cache: false,
+                })
+                .dt()
+                .month()
+                .alias("Month"),
+        )
         .collect()?;
 
     let agg_df = df
@@ -47,7 +71,19 @@ pub fn aggregate_by_account_department_month(csv_path: &str) -> Result<DataFrame
 
     df = df
         .lazy()
-        .with_column(col("Date").dt().month().alias("Month"))
+        .with_column(
+            col("Date")
+                .str()
+                .to_date(StrptimeOptions {
+                    format: Some("%Y-%m-%d".to_string().into()),
+                    strict: false,
+                    exact: false,
+                    cache: false,
+                })
+                .dt()
+                .month()
+                .alias("Month"),
+        )
         .collect()?;
 
     let agg_df = df
@@ -66,7 +102,7 @@ pub fn pivot_aggregation(df: &DataFrame, group_cols: &[&str]) -> Result<DataFram
     let mut agg_exprs = Vec::new();
 
     // Convert months to i32 for filtering
-    for month in months.i32()? {
+    for month in months.i8()? {
         if let Some(m) = month {
             let month_expr = col("Total")
                 .filter(col("Month").eq(lit(m)))
