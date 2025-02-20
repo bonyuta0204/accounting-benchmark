@@ -131,9 +131,17 @@ compared to both the Go implementation and unoptimized Rust version.
 3. Generate data using the CLI options described above
 
 ### Rust Implementation
-1. Navigate to the `rust` directory
-2. Build with `cargo build` and run with `cargo run`
+```bash
+cd rust
+# Debug build and run
+cargo run
+
+# Optimized release build and run (recommended for benchmarking)
+cargo run --release
+```
 
 ### Go Implementation
-1. Navigate to the `go` directory
-2. Build with `go build` and run with `go run main.go`
+```bash
+cd go
+go run .
+```
