@@ -9,20 +9,64 @@ import (
 	"github.com/go-gota/gota/series"
 )
 
-// ProcessAggregations performs the aggregations and writes output CSV files.
-func ProcessAggregations(csvPath string) {
+func ProcessAccountMonthAggregation(csvPath string) bool {
+	df := readAndPreprocessCSV(csvPath)
+	if df.Err != nil {
+		return false
+	}
+
+	accountAgg := aggregate(df, "Account", "Month")
+	return writeDataFrameToCSV(accountAgg, "../results/go_account_month.csv")
+}
+
+func ProcessDepartmentMonthAggregation(csvPath string) bool {
+	df := readAndPreprocessCSV(csvPath)
+	if df.Err != nil {
+		return false
+	}
+
+	departmentAgg := aggregate(df, "Department", "Month")
+	return writeDataFrameToCSV(departmentAgg, "../results/go_department_month.csv")
+}
+
+func ProcessAccountDepartmentMonthAggregation(csvPath string) bool {
+	df := readAndPreprocessCSV(csvPath)
+	if df.Err != nil {
+		return false
+	}
+
+	accountDeptAgg := aggregateTwo(df, "Account", "Department", "Month")
+	return writeDataFrameToCSV(accountDeptAgg, "../results/go_account_dept_month.csv")
+}
+
+func CreatePivotTable(csvPath string) bool {
+	df := readAndPreprocessCSV(csvPath)
+	if df.Err != nil {
+		return false
+	}
+
+	accountAgg := aggregate(df, "Account", "Month")
+	pivot := pivotAggregation(accountAgg, "Account", "Month", "Total")
+	return writeDataFrameToCSV(pivot, "../results/go_pivot_aggregation.csv")
+}
+
+func readAndPreprocessCSV(csvPath string) dataframe.DataFrame {
 	// Open CSV file
 	file, err := os.Open(csvPath)
 	if err != nil {
 		fmt.Println("Error opening CSV:", err)
-		return
+		return dataframe.DataFrame{Err: err}
 	}
 	defer file.Close()
 
 	df := dataframe.ReadCSV(file)
+	if df.Err != nil {
+		fmt.Println("Error reading CSV:", df.Err)
+		return df
+	}
 
 	// Add a Month column extracted from the Date column
-	dates := df.Col("Date").Records() // skip header row if present
+	dates := df.Col("Date").Records()
 	months := make([]int, len(dates))
 	for i, d := range dates {
 		t, err := time.Parse("2006-01-02", d)
@@ -33,27 +77,16 @@ func ProcessAggregations(csvPath string) {
 		}
 	}
 	monthSeries := series.New(months, series.Int, "Month")
-
 	df = df.Mutate(monthSeries)
 
-	// Aggregation 1: Account × Monthly Aggregation
-	accountAgg := aggregate(df, "Account", "Month")
-	writeDataFrameToCSV(accountAgg, "../results/go_account_month.csv")
-
-	// Aggregation 2: Department × Monthly Aggregation
-	departmentAgg := aggregate(df, "Department", "Month")
-	writeDataFrameToCSV(departmentAgg, "../results/go_department_month.csv")
-
-	// Aggregation 3: Account × Department × Monthly Aggregation
-	accountDeptAgg := aggregateTwo(df, "Account", "Department", "Month")
-	writeDataFrameToCSV(accountDeptAgg, "../results/go_account_dept_month.csv")
-
-	// Optionally: Create a pivot table for account aggregation (rows: Account, columns: Month)
-	pivot := pivotAggregation(accountAgg, "Account", "Month", "Total")
-	writeDataFrameToCSV(pivot, "../results/go_pivot_aggregation.csv")
+	return df
 }
 
 func aggregate(df dataframe.DataFrame, groupCol string, monthCol string) dataframe.DataFrame {
+	if df.Err != nil {
+		return df
+	}
+
 	groups := []string{groupCol, monthCol}
 	agg := df.GroupBy(groups...).Aggregation(
 		[]dataframe.AggregationType{dataframe.Aggregation_SUM},
@@ -64,6 +97,10 @@ func aggregate(df dataframe.DataFrame, groupCol string, monthCol string) datafra
 }
 
 func aggregateTwo(df dataframe.DataFrame, groupCol1, groupCol2, monthCol string) dataframe.DataFrame {
+	if df.Err != nil {
+		return df
+	}
+
 	groups := []string{groupCol1, groupCol2, monthCol}
 	agg := df.GroupBy(groups...).Aggregation(
 		[]dataframe.AggregationType{dataframe.Aggregation_SUM},
@@ -73,8 +110,11 @@ func aggregateTwo(df dataframe.DataFrame, groupCol1, groupCol2, monthCol string)
 	return agg
 }
 
-// pivotAggregation creates a simple pivot table from the aggregated dataframe.
 func pivotAggregation(df dataframe.DataFrame, groupCol, pivotCol, valueCol string) dataframe.DataFrame {
+	if df.Err != nil {
+		return df
+	}
+
 	// Get unique group values
 	groups := make([]string, 0)
 	groupColSeries := df.Col(groupCol)
@@ -101,51 +141,56 @@ func pivotAggregation(df dataframe.DataFrame, groupCol, pivotCol, valueCol strin
 		records[0] = append(records[0], fmt.Sprintf("Month_%v", pivot))
 	}
 
-	// Build a lookup map: map[string]map[string]string
-	dataMap := make(map[string]map[string]string)
+	// Build data rows
+	valueMap := make(map[string]map[string]string)
 	for i := 0; i < df.Nrow(); i++ {
-		row := df.Subset(i)
-		groupVal := row.Col(groupCol).Elem(0).String()
-		pivotVal := row.Col(pivotCol).Elem(0).String()
-		totalVal := row.Col(valueCol).Elem(0).String()
-		if _, ok := dataMap[groupVal]; !ok {
-			dataMap[groupVal] = make(map[string]string)
+		group := groupColSeries.Elem(i).String()
+		pivot := pivotColSeries.Elem(i).String()
+		value := df.Col(valueCol).Elem(i).String()
+
+		if valueMap[group] == nil {
+			valueMap[group] = make(map[string]string)
 		}
-		dataMap[groupVal][pivotVal] = totalVal
+		valueMap[group][pivot] = value
 	}
 
-	// Build rows for each group
 	for _, group := range groups {
 		row := []string{group}
 		for _, pivot := range pivots {
-			if val, ok := dataMap[group][pivot]; ok {
-				row = append(row, val)
-			} else {
-				row = append(row, "0")
+			value, exists := valueMap[group][pivot]
+			if !exists {
+				value = "0"
 			}
+			row = append(row, value)
 		}
 		records = append(records, row)
 	}
 
-	pivotDF := dataframe.LoadRecords(records)
-	return pivotDF
+	return dataframe.LoadRecords(records)
 }
 
-func writeDataFrameToCSV(df dataframe.DataFrame, path string) {
-	file, err := os.Create(path)
-	if err != nil {
-		fmt.Println("Error creating file:", err)
-		return
+func writeDataFrameToCSV(df dataframe.DataFrame, path string) bool {
+	if df.Err != nil {
+		fmt.Printf("Error writing CSV: %v\n", df.Err)
+		return false
 	}
-	defer file.Close()
 
-	err = df.WriteCSV(file)
+	f, err := os.Create(path)
 	if err != nil {
-		fmt.Println("Error writing CSV:", err)
+		fmt.Printf("Error creating file %s: %v\n", path, err)
+		return false
 	}
+	defer f.Close()
+
+	err = df.WriteCSV(f)
+	if err != nil {
+		fmt.Printf("Error writing to file %s: %v\n", path, err)
+		return false
+	}
+
+	return true
 }
 
-// Helper function to check if a string slice contains a value
 func contains(slice []string, val string) bool {
 	for _, item := range slice {
 		if item == val {

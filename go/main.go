@@ -21,8 +21,11 @@ func main() {
 			fmt.Println("CSV generated at", *csvPath)
 		}
 	case "process":
-		// Process aggregations without benchmarking
-		ProcessAggregations(*csvPath)
+		// Process each aggregation separately
+		ProcessAccountMonthAggregation(*csvPath)
+		ProcessDepartmentMonthAggregation(*csvPath)
+		ProcessAccountDepartmentMonthAggregation(*csvPath)
+		CreatePivotTable(*csvPath)
 	case "benchmark":
 		BenchmarkAggregations(*csvPath)
 	default:
