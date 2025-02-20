@@ -24,17 +24,17 @@ This Go solution uses the [Gota DataFrame](https://github.com/go-gota/gota) libr
 
 #### Generate Sample Data
 ```bash
-go run main.go -mode=generate -csv=../data/sample_1m.csv -rows=1000000
+go run . -mode=generate -csv=../data/sample_1m.csv -rows=1000000
 ```
 
 #### Process Aggregations
 ```bash
-go run main.go -mode=process -csv=../data/sample_1m.csv
+go run . -mode=process -csv=../data/sample_1m.csv
 ```
 
 #### Run Benchmarks
 ```bash
-go run main.go -mode=benchmark -csv=../data/sample_1m.csv
+go run . -mode=benchmark -csv=../data/sample_1m.csv
 ```
 
 ### Command Line Arguments
