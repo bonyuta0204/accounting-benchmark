@@ -90,6 +90,47 @@ cargo run -- -o ../data/sample_1m.csv -r 1000000
 cargo run -- -o ../data/sample_10m.csv -r 10000000 -s 2023-01-01 -e 2023-12-31
 ```
 
+## Running Benchmarks
+
+The project includes a Makefile to automate data generation and benchmarking. Here are the main commands:
+
+### Generate Data
+```bash
+# Generate all datasets (1M, 10M, 100M records)
+make generate-all
+
+# Generate specific dataset
+make generate-1m    # 1 million records
+make generate-10m   # 10 million records
+make generate-100m  # 100 million records
+```
+
+### Run Benchmarks
+```bash
+# Run all benchmarks
+make benchmark-all
+
+# Run specific benchmark
+make benchmark-1m    # 1 million records benchmark
+make benchmark-10m   # 10 million records benchmark
+make benchmark-100m  # 100 million records benchmark
+```
+
+### Clean Up
+```bash
+# Clean generated data files
+make clean-data
+
+# Clean all generated files and build artifacts
+make clean
+```
+
+### Build Only
+```bash
+# Build all components
+make build-all
+```
+
 ## Benchmark Results
 
 Below are the benchmark results comparing Go and Rust implementations:

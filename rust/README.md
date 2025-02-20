@@ -21,25 +21,40 @@ This Rust solution uses the [Polars](https://github.com/pola-rs/polars) library 
 1. Navigate to the `rust` directory
 2. Build the project:
    ```bash
-   cargo build
+   cargo build --release
    ```
 
 ### Usage
 
-#### Run with Default Settings
+Run the benchmark with a specific data file:
 ```bash
-cargo run
+cargo run --release -- /path/to/data.csv
+
+# Example
+cargo run --release -- ../data/transactions_1m.csv
 ```
 
-#### Configuration
-The behavior can be configured by modifying `main.rs`:
-- File Paths: Modify the CSV file paths in the configuration section
-- Aggregation Options: Enable/disable specific aggregation types
+### Command Line Arguments
+The program takes a single positional argument:
+- Path to the CSV file (required)
+
+### Using Makefile
+You can also use the Makefile in the root directory to run benchmarks:
+```bash
+# Run 1M records benchmark
+make benchmark-1m
+
+# Run 10M records benchmark
+make benchmark-10m
+
+# Run 100M records benchmark
+make benchmark-100m
+```
 
 ### Project Structure
 ```
 src/
-├── main.rs           # Entry point and configuration
+├── main.rs           # Entry point and CLI argument handling
 ├── process.rs        # Data processing and aggregation
 └── benchmark.rs      # Benchmarking utilities
 ```

@@ -24,15 +24,29 @@ This Go solution uses the [Gota DataFrame](https://github.com/go-gota/gota) libr
 
 Run the benchmark:
 ```bash
-# Use default data path (../data/sample_1m.csv)
-go run .
+# Run with a specific data file
+go run . /path/to/data.csv
 
-# Or specify a custom data path
-go run . -csv=../data/sample_10m.csv
+# Example
+go run . ../data/transactions_1m.csv
 ```
 
 ### Command Line Arguments
-- `-csv`: Path to the CSV file (default: "../data/sample_1m.csv")
+The program takes a single positional argument:
+- Path to the CSV file (required)
+
+### Using Makefile
+You can also use the Makefile in the root directory to run benchmarks:
+```bash
+# Run 1M records benchmark
+make benchmark-1m
+
+# Run 10M records benchmark
+make benchmark-10m
+
+# Run 100M records benchmark
+make benchmark-100m
+```
 
 ### Output
 Results will be saved in the `../results/` directory with the following files:
