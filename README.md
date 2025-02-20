@@ -74,9 +74,9 @@ Account × Department × Monthly Aggregation took: 1.852361s
 
 ### Rust Implementation (Unoptimized)
 ```
-Account × Monthly Aggregation took: 1.696857833s
-Department × Monthly Aggregation took: 1.683926916s
-Account × Department × Monthly Aggregation took: 1.852361s
+Account × Monthly Aggregation took: 1.727755958s
+Department × Monthly Aggregation took: 1.701820167s
+Account × Department × Monthly Aggregation took: 1.794037666s
 ```
 
 ### Rust Implementation (Optimized)
