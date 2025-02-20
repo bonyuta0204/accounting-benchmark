@@ -3,7 +3,6 @@ use crate::process::{aggregate_by_account_month, aggregate_by_department_month, 
 use polars::prelude::*;
 use std::error::Error;
 use std::fs::File;
-use csv::Writer;
 
 pub fn run_benchmarks(csv_path: &str) {
     // Benchmark Account × Monthly Aggregation
@@ -34,9 +33,8 @@ pub fn run_benchmarks(csv_path: &str) {
 
 fn write_df_to_csv(df: &DataFrame, path: &str) -> Result<(), Box<dyn Error>> {
     let mut file = File::create(path)?;
+    let mut df = df.clone();
     CsvWriter::new(&mut file)
-        .has_header(true)
-        .finish(df)?;
+        .finish(&mut df)?;
     Ok(())
 }
-

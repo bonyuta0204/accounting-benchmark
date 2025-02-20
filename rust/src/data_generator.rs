@@ -1,8 +1,8 @@
+use chrono::{Duration, NaiveDate};
+use rand::Rng;
 use std::error::Error;
 use std::fs::File;
 use std::io::Write;
-use rand::Rng;
-use chrono::{NaiveDate, Duration};
 
 pub fn generate_csv(path: &str, rows: usize) -> Result<(), Box<dyn Error>> {
     let mut file = File::create(path)?;
@@ -21,8 +21,14 @@ pub fn generate_csv(path: &str, rows: usize) -> Result<(), Box<dyn Error>> {
         let account = accounts[rng.gen_range(0..accounts.len())];
         let department = departments[rng.gen_range(0..departments.len())];
 
-        writeln!(file, "{},{},{},{}", date.format("%Y-%m-%d"), amount, account, department)?;
+        writeln!(
+            file,
+            "{},{},{},{}",
+            date.format("%Y-%m-%d"),
+            amount,
+            account,
+            department
+        )?;
     }
     Ok(())
 }
-
