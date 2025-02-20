@@ -1,0 +1,11 @@
+[package]
+name = "accounting_benchmark"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+polars = { version = "0.29.1", features = ["csv", "temporal"] }
+chrono = "0.4"
+rand = "0.8"
+csv = "1.1"
+
