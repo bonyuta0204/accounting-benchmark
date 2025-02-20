@@ -5,7 +5,6 @@ import (
     "fmt"
     "math/rand"
     "os"
-    "strconv"
     "time"
 )
 
@@ -45,4 +44,3 @@ func GenerateCSV(path string, rows int) error {
     }
     return nil
 }
-
