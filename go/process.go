@@ -22,7 +22,7 @@ func ProcessAggregations(csvPath string) {
 	df := dataframe.ReadCSV(file)
 
 	// Add a Month column extracted from the Date column
-	dates := df.Col("Date").Records()[1:] // skip header row if present
+	dates := df.Col("Date").Records() // skip header row if present
 	months := make([]int, len(dates))
 	for i, d := range dates {
 		t, err := time.Parse("2006-01-02", d)
@@ -33,6 +33,7 @@ func ProcessAggregations(csvPath string) {
 		}
 	}
 	monthSeries := series.New(months, series.Int, "Month")
+
 	df = df.Mutate(monthSeries)
 
 	// Aggregation 1: Account × Monthly Aggregation
@@ -53,14 +54,12 @@ func ProcessAggregations(csvPath string) {
 }
 
 func aggregate(df dataframe.DataFrame, groupCol string, monthCol string) dataframe.DataFrame {
-	// Group by groupCol and monthCol, summing the "Amount" column.
 	groups := []string{groupCol, monthCol}
 	agg := df.GroupBy(groups...).Aggregation(
 		[]dataframe.AggregationType{dataframe.Aggregation_SUM},
 		[]string{"Amount"},
 	)
-	// Rename the aggregated column to "Total"
-	agg = agg.Rename("Amount_sum", "Total")
+	agg = agg.Rename("Total", "Amount_SUM")
 	return agg
 }
 
@@ -70,7 +69,7 @@ func aggregateTwo(df dataframe.DataFrame, groupCol1, groupCol2, monthCol string)
 		[]dataframe.AggregationType{dataframe.Aggregation_SUM},
 		[]string{"Amount"},
 	)
-	agg = agg.Rename("Amount_sum", "Total")
+	agg = agg.Rename("Total", "Amount_SUM")
 	return agg
 }
 
