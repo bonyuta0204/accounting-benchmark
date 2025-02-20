@@ -45,14 +45,23 @@ go-bench-100m: build-go data/transactions_100m.csv
 	cd go && go run . ../data/transactions_100m.csv
 
 # Data file dependencies
-data/transactions_1m.csv: build-generator
+data/transactions_1m.csv:
 	$(MAKE) generate-1m
 
-data/transactions_10m.csv: build-generator
+data/transactions_10m.csv:
 	$(MAKE) generate-10m
 
-data/transactions_100m.csv: build-generator
+data/transactions_100m.csv:
 	$(MAKE) generate-100m
+
+# Clean targets
+clean:
+	cd generator && cargo clean
+	cd rust && cargo clean
+	cd go && go clean
+	
+clean-data:
+	rm -f data/transactions_*.csv
 
 # Combined benchmark targets
 benchmark-1m: rust-bench-1m go-bench-1m
@@ -61,16 +70,7 @@ benchmark-10m: rust-bench-10m go-bench-10m
 
 benchmark-100m: rust-bench-100m go-bench-100m
 
-benchmark-all: benchmark-1m benchmark-10m benchmark-100m
-
-# Clean targets
-clean-data:
-	rm -f data/transactions_*.csv
-
-clean: clean-data
-	cd rust && cargo clean
-	cd go && go clean
-	cd generator && cargo clean
+benchmark-all: rust-bench-1m rust-bench-10m rust-bench-100m go-bench-1m go-bench-10m go-bench-100m
 
 # Default target
 all: build-all generate-all benchmark-all
