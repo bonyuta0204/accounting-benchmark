@@ -16,10 +16,16 @@ func main() {
 	csvPath := os.Args[1]
 	var dataFrameRunner = NewDataFrameRunner()
 	var naiveRunner = NewNaiveAggregator()
-	var aggregators = []Aggregator{dataFrameRunner, naiveRunner}
+	var duckdbRunner = NewDuckDBAggregator()
+	var aggregators = []Aggregator{dataFrameRunner, naiveRunner, duckdbRunner}
 
 	for _, aggregator := range aggregators {
 		fmt.Println("=== Running benchmark using", aggregator.Name())
+		
+		// Clean up DuckDB connection after use
+		if duckdb, ok := aggregator.(*DuckDBAggregator); ok {
+			defer duckdb.Close()
+		}
 
 		// Load CSV
 
