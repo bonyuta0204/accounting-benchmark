@@ -6,6 +6,9 @@ import (
 	"os"
 	"strconv"
 	"strings"
+	
+	"github.com/xitongsys/parquet-go-source/local"
+	"github.com/xitongsys/parquet-go/reader"
 )
 
 var _ Aggregator = (*NaiveAggregator)(nil)
@@ -129,6 +132,46 @@ func (r *NaiveAggregator) Aggregate(columns ...string) error {
 	}
 	
 	r.resultData = result
+	return nil
+}
+
+func (r *NaiveAggregator) LoadParquet(filepath string) error {
+	fr, err := local.NewLocalFileReader(filepath)
+	if err != nil {
+		return fmt.Errorf("failed to open parquet file: %w", err)
+	}
+	defer fr.Close()
+
+	pr, err := reader.NewParquetReader(fr, new(Transaction), 4)
+	if err != nil {
+		return fmt.Errorf("failed to create parquet reader: %w", err)
+	}
+	defer pr.ReadStop()
+
+	num := int(pr.GetNumRows())
+	transactions := make([]Transaction, num)
+	if err = pr.Read(&transactions); err != nil {
+		return fmt.Errorf("failed to read parquet data: %w", err)
+	}
+
+	// Convert to the same format as CSV data
+	r.headers = []string{"Date", "Amount", "Account", "Department", "Month"}
+	r.data = make([][]string, num)
+	
+	for i, t := range transactions {
+		month := ""
+		if len(t.Date) >= 7 {
+			month = t.Date[:7]
+		}
+		r.data[i] = []string{
+			t.Date,
+			fmt.Sprintf("%.2f", t.Amount),
+			t.Account,
+			t.Department,
+			month,
+		}
+	}
+	
 	return nil
 }
 

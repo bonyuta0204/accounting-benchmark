@@ -139,6 +139,33 @@ func (d *DuckDBAggregator) WriteToCSV(filepath string) error {
 	return nil
 }
 
+func (d *DuckDBAggregator) LoadParquet(filepath string) error {
+	// Initialize DuckDB
+	db, err := sql.Open("duckdb", "")
+	if err != nil {
+		return fmt.Errorf("failed to open duckdb: %w", err)
+	}
+	d.db = db
+
+	// Create table and load Parquet
+	createTableSQL := `
+		CREATE TABLE transactions AS 
+		SELECT Date::DATE as Date,
+		       Amount,
+		       Account,
+		       Department,
+		       strftime(Date::DATE, '%Y-%m') AS Month
+		FROM read_parquet($1)
+	`
+	
+	_, err = d.db.Exec(createTableSQL, filepath)
+	if err != nil {
+		return fmt.Errorf("failed to load Parquet: %w", err)
+	}
+
+	return nil
+}
+
 // Close the database connection
 func (d *DuckDBAggregator) Close() error {
 	if d.db != nil {

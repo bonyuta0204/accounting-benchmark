@@ -7,6 +7,8 @@ import (
 
 	"github.com/go-gota/gota/dataframe"
 	"github.com/go-gota/gota/series"
+	"github.com/xitongsys/parquet-go-source/local"
+	"github.com/xitongsys/parquet-go/reader"
 )
 
 var _ Aggregator = (*DataFrameRunner)(nil)
@@ -87,6 +89,57 @@ func contains(slice []string, val string) bool {
 		}
 	}
 	return false
+}
+
+// Transaction represents a single transaction record
+type Transaction struct {
+	Date       string  `parquet:"name=Date, type=BYTE_ARRAY, convertedtype=UTF8"`
+	Amount     float64 `parquet:"name=Amount, type=DOUBLE"`
+	Account    string  `parquet:"name=Account, type=BYTE_ARRAY, convertedtype=UTF8"`
+	Department string  `parquet:"name=Department, type=BYTE_ARRAY, convertedtype=UTF8"`
+}
+
+func (r *DataFrameRunner) LoadParquet(parquetPath string) error {
+	fr, err := local.NewLocalFileReader(parquetPath)
+	if err != nil {
+		return err
+	}
+	defer fr.Close()
+
+	pr, err := reader.NewParquetReader(fr, new(Transaction), 4)
+	if err != nil {
+		return err
+	}
+	defer pr.ReadStop()
+
+	num := int(pr.GetNumRows())
+	transactions := make([]Transaction, num)
+	if err = pr.Read(&transactions); err != nil {
+		return err
+	}
+
+	// Convert to dataframe
+	dates := make([]string, num)
+	amounts := make([]float64, num)
+	accounts := make([]string, num)
+	departments := make([]string, num)
+
+	for i, t := range transactions {
+		dates[i] = t.Date
+		amounts[i] = t.Amount
+		accounts[i] = t.Account
+		departments[i] = t.Department
+	}
+
+	df := dataframe.New(
+		series.New(dates, series.String, "Date"),
+		series.New(amounts, series.Float, "Amount"),
+		series.New(accounts, series.String, "Account"),
+		series.New(departments, series.String, "Department"),
+	)
+
+	r.rawData = &df
+	return df.Err
 }
 
 func (r *DataFrameRunner) WriteToCSV(path string) error {
