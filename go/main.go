@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"os"
+	"time"
 )
 
 func main() {
@@ -11,7 +12,18 @@ func main() {
 		os.Exit(1)
 	}
 
+	//
 	csvPath := os.Args[1]
-	fmt.Printf("Running benchmark using data from: %s\n", csvPath)
-	BenchmarkAggregations(csvPath)
+	var dataFrameRunner = NewDataFrameRunner(csvPath)
+	var naiveRunner = NewNaiveRunner(csvPath)
+	var runners = []AggregationRunner{dataFrameRunner, naiveRunner}
+
+	for _, runner := range runners {
+		fmt.Println("=== Running benchmark using", runner.Name())
+		start := time.Now()
+		if err := runner.Run(); err != nil {
+			fmt.Printf("Error running benchmark: %v\n", err)
+		}
+		fmt.Printf("Total time: %s\n", time.Since(start))
+	}
 }

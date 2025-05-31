@@ -2,6 +2,33 @@ use polars::prelude::*;
 use std::error::Error;
 use std::fs::File;
 
+// Load CSV data into DataFrame
+pub fn load_csv(csv_path: &str) -> Result<DataFrame, Box<dyn Error>> {
+    let file = File::open(csv_path)?;
+    let df = CsvReader::new(file).finish()?;
+    Ok(df)
+}
+
+// Process DataFrame to add Month column
+pub fn add_month_column(df: DataFrame) -> Result<DataFrame, Box<dyn Error>> {
+    df.lazy()
+        .with_column(
+            col("Date")
+                .str()
+                .to_date(StrptimeOptions {
+                    format: Some("%Y-%m-%d".to_string().into()),
+                    strict: false,
+                    exact: false,
+                    cache: false,
+                })
+                .dt()
+                .month()
+                .alias("Month"),
+        )
+        .collect()
+        .map_err(|e| e.into())
+}
+
 pub fn aggregate_by_account_month(csv_path: &str) -> Result<DataFrame, Box<dyn Error>> {
     // Read CSV file
     let file = File::open(csv_path)?;
@@ -27,6 +54,20 @@ pub fn aggregate_by_account_month(csv_path: &str) -> Result<DataFrame, Box<dyn E
 
     // Group by Account and Month; sum the Amount
     let agg_df = df
+        .lazy()
+        .group_by(&[col("Account"), col("Month")])
+        .agg([col("Amount").sum().alias("Total")])
+        .collect()?;
+
+    Ok(agg_df)
+}
+
+// Processing-only version that takes pre-loaded DataFrame
+pub fn aggregate_by_account_month_df(df: &DataFrame) -> Result<DataFrame, Box<dyn Error>> {
+    let df_with_month = add_month_column(df.clone())?;
+    
+    // Group by Account and Month; sum the Amount
+    let agg_df = df_with_month
         .lazy()
         .group_by(&[col("Account"), col("Month")])
         .agg([col("Amount").sum().alias("Total")])
@@ -65,6 +106,19 @@ pub fn aggregate_by_department_month(csv_path: &str) -> Result<DataFrame, Box<dy
     Ok(agg_df)
 }
 
+// Processing-only version that takes pre-loaded DataFrame
+pub fn aggregate_by_department_month_df(df: &DataFrame) -> Result<DataFrame, Box<dyn Error>> {
+    let df_with_month = add_month_column(df.clone())?;
+    
+    let agg_df = df_with_month
+        .lazy()
+        .group_by(&[col("Department"), col("Month")])
+        .agg([col("Amount").sum().alias("Total")])
+        .collect()?;
+
+    Ok(agg_df)
+}
+
 pub fn aggregate_by_account_department_month(csv_path: &str) -> Result<DataFrame, Box<dyn Error>> {
     let file = File::open(csv_path)?;
     let mut df = CsvReader::new(file).finish()?;
@@ -87,6 +141,19 @@ pub fn aggregate_by_account_department_month(csv_path: &str) -> Result<DataFrame
         .collect()?;
 
     let agg_df = df
+        .lazy()
+        .group_by(&[col("Account"), col("Department"), col("Month")])
+        .agg([col("Amount").sum().alias("Total")])
+        .collect()?;
+
+    Ok(agg_df)
+}
+
+// Processing-only version that takes pre-loaded DataFrame
+pub fn aggregate_by_account_department_month_df(df: &DataFrame) -> Result<DataFrame, Box<dyn Error>> {
+    let df_with_month = add_month_column(df.clone())?;
+    
+    let agg_df = df_with_month
         .lazy()
         .group_by(&[col("Account"), col("Department"), col("Month")])
         .agg([col("Amount").sum().alias("Total")])
