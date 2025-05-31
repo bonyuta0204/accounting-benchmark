@@ -44,7 +44,7 @@ fn generate_csv(
     end_date: NaiveDate,
 ) -> Result<(), Box<dyn Error>> {
     let mut file = File::create(path)?;
-    writeln!(file, "Date,Amount,Account,Department")?;
+    writeln!(file, "Date,Amount,Account,Department,Month")?;
 
     let date_range = end_date.signed_duration_since(start_date).num_days() as i64;
     let accounts = vec!["Sales", "Expenses", "Assets", "Liabilities"];
@@ -58,14 +58,16 @@ fn generate_csv(
         let amount: f64 = rng.gen_range(10.0..1000.0);
         let account = accounts[rng.gen_range(0..accounts.len())];
         let department = departments[rng.gen_range(0..departments.len())];
+        let month = date.format("%Y-%m").to_string();
 
         writeln!(
             file,
-            "{},{:.2},{},{}",
+            "{},{:.2},{},{},{}",
             date.format("%Y-%m-%d"),
             amount,
             account,
-            department
+            department,
+            month
         )?;
     }
     Ok(())
@@ -87,11 +89,13 @@ fn generate_parquet(
     let mut amounts = Vec::with_capacity(rows);
     let mut account_vec = Vec::with_capacity(rows);
     let mut department_vec = Vec::with_capacity(rows);
+    let mut month_vec = Vec::with_capacity(rows);
 
     for _ in 0..rows {
         let offset = rng.gen_range(0..=date_range);
         let date = start_date + Duration::days(offset);
         dates.push(date.format("%Y-%m-%d").to_string());
+        month_vec.push(date.format("%Y-%m").to_string());
         
         let amount: f64 = rng.gen_range(10.0..1000.0);
         amounts.push(amount);
@@ -108,6 +112,7 @@ fn generate_parquet(
         Series::new("Amount", amounts),
         Series::new("Account", account_vec),
         Series::new("Department", department_vec),
+        Series::new("Month", month_vec),
     ])?;
 
     let mut file = File::create(&path)?;
